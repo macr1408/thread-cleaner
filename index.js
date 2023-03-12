@@ -17,13 +17,11 @@ app.shortcut('remove_thread_replies', async ({ body, ack }) => {
     return;
   }
 
+  // Trigger only on parent message to avoid mistakes
   if (threadTs === ts) {
     let messages;
     try {
-      messages = await app.client.conversations.replies({
-        channel,
-        ts: threadTs,
-      });
+      messages = await app.client.conversations.replies({channel, ts: threadTs});
     } catch (error) {
       console.log(error);
       return;
@@ -31,11 +29,7 @@ app.shortcut('remove_thread_replies', async ({ body, ack }) => {
 
     for (const message of messages.messages) {
       try {
-        await app.client.chat.delete({
-          channel,
-          ts: message.ts,
-          as_user: true,
-        });
+        await app.client.chat.delete({channel, ts: message.ts, as_user: true});
       } catch (error) {
         console.log(error);
       }
