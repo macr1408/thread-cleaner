@@ -6,19 +6,31 @@ const app = new App({
   token: config.token, // user token
 });
 
+function isParentMessage(body) {
+  const threadTs = body.message.thread_ts;
+  const ts = body.message.ts;
+
+  if (!threadTs) {
+    return false;
+  }
+
+  return threadTs === ts;
+}
+
+function isOwnMessage(body) {
+  const owner = body.message.user;
+  const requester = body.user.id;
+
+  return owner === requester;
+}
+
 app.shortcut('remove_thread_replies', async ({ body, ack }) => {
   await ack();
 
   const channel = body.channel.id;
-  const ts = body.message.ts;
   const threadTs = body.message.thread_ts;
 
-  if (!threadTs) {
-    return;
-  }
-
-  // Trigger only on parent message to avoid mistakes
-  if (threadTs === ts) {
+  if (isParentMessage(body) && isOwnMessage(body)) {
     let messages;
     try {
       messages = await app.client.conversations.replies({channel, ts: threadTs});
